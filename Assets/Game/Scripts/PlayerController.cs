@@ -27,6 +27,7 @@ public class PlayerController : NetworkBehaviour
     //private Stopwatch chrono;
     // Store a Vector3 offset from the player (a distance to place the camera from the player at all times)
     private Vector3 offset;
+    private Vector3 zoom;
     // Create private references to the rigidbody component on the player, and the count of pick up objects picked up so far
     private Rigidbody rb;
     [SyncVar]
@@ -42,7 +43,7 @@ public class PlayerController : NetworkBehaviour
 
     void UpdateNameScore()
     {
-        playerName = GUI.TextField(new Rect(Screen.width - Screen.width / 5, 10, Screen.width / 5, Screen.height / 10), playerName);
+        playerName = GUI.TextField(new Rect(Screen.width - Screen.width / 5, 10, Screen.width / 5, Screen.height / 20), playerName);
         playerAndScore.text = playerName + ": " + score.ToString();
     }
 
@@ -57,6 +58,7 @@ public class PlayerController : NetworkBehaviour
         score = 0;
         // Set the position of the camera above the player
         offset = Camera.main.transform.position;
+        zoom = offset;
         //chrono.Start();
         // Calculate density of the sphere according to its starting mass and size
         float sphereVolume = (4 * (float)Math.PI * (float)Math.Pow(gameObject.transform.lossyScale.x, 3)) / 3;
@@ -80,7 +82,7 @@ public class PlayerController : NetworkBehaviour
         }
 
         //Update the camera's position
-        Camera.main.transform.position = this.player.transform.position + offset;
+        Camera.main.transform.position = this.player.transform.position + zoom;        
 
         // Create a Vector3 variable, and assign X and Z to feature our horizontal and vertical float variables above
         Vector3 movement = new Vector3(moveHorizontal * factor, 0.0f, moveVertical * factor);
@@ -120,7 +122,7 @@ public class PlayerController : NetworkBehaviour
         // Add one to the score variable 'score'
         score = score + 1;
         // Update the text field of our 'countText' variable
-        offset = new Vector3(offset.x, offset.y + 1* factor, offset.z -1 * factor);
+        zoom = new Vector3(zoom.x, zoom.y + 1* factor, zoom.z -1 * factor);
         // Check if our 'count' is equal to or exceeded 12
         if (score >= 12)
         {
@@ -142,6 +144,15 @@ public class PlayerController : NetworkBehaviour
     {
         gameObject.transform.localScale = new Vector3(gameObject.transform.lossyScale.x * factor, gameObject.transform.lossyScale.y * factor, gameObject.transform.lossyScale.z * factor);
         float sphereVolume = (4 * (float)Math.PI * (float)Math.Pow(gameObject.transform.lossyScale.x, 3)) / 3;
+        var trail = GetComponent<TrailRenderer>();
+        trail.time = trail.time * factor;
         rb.mass = density * sphereVolume;
+    }
+    void OnDestroy()
+    {
+        if (!isLocalPlayer)
+        {
+            Camera.main.transform.position = offset;
+        }
     }
 }
